@@ -9,3 +9,8 @@ aws_region = "us-east-1"
 # The issuer is: https://[your-instance].clerk.accounts.dev
 clerk_jwks_url = "https://engaging-feline-80.clerk.accounts.dev/.well-known/jwks.json"
 clerk_issuer   = "https://engaging-feline-80.clerk.accounts.dev"
+# Optional: database overrides. Leave unset to read them from Part 5 state.
+# Set these when Aurora was created outside Part 5 Terraform (e.g. an express cluster on a free-plan account).
+# aurora_cluster_arn = "arn:aws:rds:us-east-1:123456789012:cluster:alex-aurora-cluster"
+# aurora_secret_arn  = "arn:aws:secretsmanager:us-east-1:123456789012:secret:alex-aurora-app-credentials-xxxxxx"
+# aurora_database    = "alex"
