@@ -13,3 +13,9 @@ variable "cloudfront_distribution_id" {
   description = "CloudFront distribution ID of the frontend (from Part 7)"
   type        = string
 }
+
+variable "create_oidc_provider" {
+  description = "Create the GitHub OIDC provider; set false if the account already has one"
+  type        = bool
+  default     = true
+}

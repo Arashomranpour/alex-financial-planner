@@ -2,3 +2,6 @@
 aws_region                 = "us-east-1"
 github_repository          = "your-github-user/alex-financial-planner"
 cloudfront_distribution_id = "E1234567890ABC" # terraform output in 7_frontend / CloudFront console
+
+# Set to false if your account already has the token.actions.githubusercontent.com provider
+create_oidc_provider = true
