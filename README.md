@@ -217,8 +217,8 @@ Aurora is the main ongoing cost. Destroy it, or let express clusters scale to ze
 
 ## Acknowledgements
 
-Built on the capstone project of the *AI in Production* course by Ed Donner. This version runs the agents on Groq through LiteLLM, supports AWS free-plan accounts with Aurora express configuration, retries while a paused database resumes, and adds CI/CD with GitHub Actions.
-
+This version runs the agents on Groq through LiteLLM, supports AWS free-plan accounts with Aurora express configuration, retries while a paused database resumes, and adds CI/CD with GitHub Actions.
+I Love Claude .
 ## License
 
 MIT © 2026 Arash Omranpour. Based on original work © 2025 Ed Donner. See [LICENSE](LICENSE).
