@@ -5,3 +5,8 @@ cloudfront_distribution_id = "E1234567890ABC" # terraform output in 7_frontend /
 
 # Set to false if your account already has the token.actions.githubusercontent.com provider
 create_oidc_provider = true
+
+# Numeric ids (GitHub now sends repo:<owner>@<owner_id>/<repo>@<repo_id> in the OIDC sub claim)
+# gh api repos/<owner>/<repo> --jq '"\(.owner.id) \(.id)"'
+github_owner_id      = "12345678"
+github_repository_id = "123456789"

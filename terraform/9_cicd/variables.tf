@@ -19,3 +19,17 @@ variable "create_oidc_provider" {
   type        = bool
   default     = true
 }
+
+# Numeric ids for GitHub's immutable-id OIDC subject format
+# (gh api repos/<owner>/<repo> --jq '"\(.owner.id) \(.id)"')
+variable "github_owner_id" {
+  description = "Numeric GitHub id of the repository owner"
+  type        = string
+  default     = ""
+}
+
+variable "github_repository_id" {
+  description = "Numeric GitHub id of the repository"
+  type        = string
+  default     = ""
+}
