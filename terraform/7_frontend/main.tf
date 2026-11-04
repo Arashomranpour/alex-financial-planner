@@ -38,6 +38,11 @@ data "terraform_remote_state" "agents" {
 locals {
   name_prefix = "alex"
 
+  # Explicit variables win over Part 5 state (e.g. an Aurora express cluster created outside Terraform)
+  aurora_cluster_arn = var.aurora_cluster_arn != "" ? var.aurora_cluster_arn : try(data.terraform_remote_state.database.outputs.aurora_cluster_arn, "")
+  aurora_secret_arn  = var.aurora_secret_arn != "" ? var.aurora_secret_arn : try(data.terraform_remote_state.database.outputs.aurora_secret_arn, "")
+  aurora_database    = var.aurora_database != "" ? var.aurora_database : try(data.terraform_remote_state.database.outputs.database_name, "alex")
+
   common_tags = {
     Project     = "alex"
     Part        = "7_frontend"
@@ -133,14 +138,14 @@ resource "aws_iam_role_policy" "api_lambda_aurora" {
           "rds-data:CommitTransaction",
           "rds-data:RollbackTransaction"
         ]
-        Resource = data.terraform_remote_state.database.outputs.aurora_cluster_arn
+        Resource = local.aurora_cluster_arn
       },
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = data.terraform_remote_state.database.outputs.aurora_secret_arn
+        Resource = local.aurora_secret_arn
       }
     ]
   })
@@ -195,7 +200,7 @@ resource "aws_lambda_function" "api" {
   function_name    = "${local.name_prefix}-api"
   role             = aws_iam_role.api_lambda_role.arn
   handler          = "lambda_handler.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../backend/api/api_lambda.zip")
+  source_code_hash = fileexists("${path.module}/../../backend/api/api_lambda.zip") ? filebase64sha256("${path.module}/../../backend/api/api_lambda.zip") : null
   runtime          = "python3.12"
   architectures    = ["x86_64"]
   timeout          = 30
@@ -205,9 +210,9 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = {
       # Database configuration from Part 5
-      AURORA_CLUSTER_ARN = data.terraform_remote_state.database.outputs.aurora_cluster_arn
-      AURORA_SECRET_ARN  = data.terraform_remote_state.database.outputs.aurora_secret_arn
-      AURORA_DATABASE    = data.terraform_remote_state.database.outputs.database_name
+      AURORA_CLUSTER_ARN = local.aurora_cluster_arn
+      AURORA_SECRET_ARN  = local.aurora_secret_arn
+      AURORA_DATABASE    = local.aurora_database
       DEFAULT_AWS_REGION = var.aws_region
 
       # SQS configuration from Part 6

@@ -1,0 +1,65 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/api/**"
+      - "backend/database/**"
+      - "backend/planner/**"
+      - "backend/tagger/**"
+      - "backend/reporter/**"
+      - "backend/charter/**"
+      - "backend/retirement/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC token for AWS
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Skipped until the AWS deploy role exists (terraform/9_cicd) and AWS_ROLE_ARN is set
+    if: vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      # Both scripts build inside the public.ecr.aws/lambda/python:3.12 image for binary compatibility
+      - name: Package agent Lambdas
+        working-directory: backend
+        run: uv run package_docker.py
+
+      - name: Package API Lambda
+        working-directory: backend/api
+        run: uv run package_docker.py
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy Lambda code
+        env:
+          BUCKET: ${{ vars.LAMBDA_PACKAGES_BUCKET }}
+        run: |
+          set -euo pipefail
+          for name in api planner tagger reporter charter retirement; do
+            zip="backend/$name/${name}_lambda.zip"
+            key="$name/${name}_lambda.zip"
+            echo "::group::alex-$name"
+            aws s3 cp "$zip" "s3://$BUCKET/$key"
+            aws lambda update-function-code --function-name "alex-$name" \
+              --s3-bucket "$BUCKET" --s3-key "$key" --query LastUpdateStatus --output text
+            aws lambda wait function-updated --function-name "alex-$name"
+            echo "::endgroup::"
+          done

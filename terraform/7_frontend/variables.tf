@@ -15,3 +15,21 @@ variable "clerk_issuer" {
   type        = string
   default     = ""  # Not actually used but kept for backwards compatibility
 }
+# Optional overrides for the database; when empty, values come from Part 5 state
+variable "aurora_cluster_arn" {
+  description = "Aurora cluster ARN (overrides Part 5 state when set)"
+  type        = string
+  default     = ""
+}
+
+variable "aurora_secret_arn" {
+  description = "Secrets Manager ARN with Data API credentials (overrides Part 5 state when set)"
+  type        = string
+  default     = ""
+}
+
+variable "aurora_database" {
+  description = "Database name (overrides Part 5 state when set)"
+  type        = string
+  default     = ""
+}

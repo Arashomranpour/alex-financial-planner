@@ -2,7 +2,25 @@
 
 ![Alex](assets/alex.png)
 
+[![CI](https://github.com/Arashomranpour/alex-financial-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/Arashomranpour/alex-financial-planner/actions/workflows/ci.yml)
+[![Deploy frontend](https://github.com/Arashomranpour/alex-financial-planner/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/Arashomranpour/alex-financial-planner/actions/workflows/deploy-frontend.yml)
+[![Deploy backend](https://github.com/Arashomranpour/alex-financial-planner/actions/workflows/deploy-backend.yml/badge.svg)](https://github.com/Arashomranpour/alex-financial-planner/actions/workflows/deploy-backend.yml)
+
 **Alex** (Agentic Learning Equities eXplainer) is a multi-agent SaaS financial planner that runs entirely on AWS serverless infrastructure. Users sign in, enter their investment accounts and holdings, and a team of AI agents works together to analyze the portfolio. The result is a written report, interactive charts, and a retirement projection.
+
+**Live demo:** https://d141bdvqlfevns.cloudfront.net
+
+## Screenshots
+
+| Landing page | Dashboard |
+|---|---|
+| ![Landing page](assets/screenshots/landing.jpg) | ![Dashboard](assets/screenshots/dashboard.jpg) |
+| **Accounts** | **AI advisory team** |
+| ![Accounts](assets/screenshots/accounts.jpg) | ![Advisor team](assets/screenshots/advisor-team.jpg) |
+| **Analysis report** | **Portfolio charts** |
+| ![Analysis report](assets/screenshots/analysis-report.jpg) | ![Charts](assets/screenshots/analysis-charts.jpg) |
+| **Retirement projection** | |
+| ![Retirement projection](assets/screenshots/analysis-retirement.jpg) | |
 
 ## Features
 
@@ -85,7 +103,9 @@ terraform/        Independent Terraform modules, deployed in order
   6_agents/       Agent Lambdas + SQS queue
   7_frontend/     S3 site, CloudFront, API Gateway, API Lambda
   8_enterprise/   Monitoring dashboards and alarms
+  9_cicd/         GitHub Actions OIDC deploy role
 scripts/          Local dev runner, deploy and destroy scripts
+.github/workflows CI checks + automatic deploys
 ```
 
 ## Getting started
@@ -157,6 +177,26 @@ cd ../scripts && uv run run_local.py
 
 Portfolio management works locally. AI analysis needs the AWS agents deployed.
 
+## CI/CD
+
+GitHub Actions authenticates to AWS through **OIDC**: a short-lived role session, with no AWS keys stored in GitHub.
+
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | every push and PR | Builds the frontend, compiles all Python, validates every Terraform module |
+| `deploy-frontend.yml` | push to `main` touching `frontend/**` | Builds the static site, syncs it to S3, invalidates CloudFront |
+| `deploy-backend.yml` | push to `main` touching the API, database or agent code | Packages the Lambdas with Docker, uploads them to S3, updates `alex-api` and the 5 agent functions |
+
+One-time setup:
+
+```bash
+cd terraform/9_cicd
+cp terraform.tfvars.example terraform.tfvars   # set github_repository + cloudfront_distribution_id
+terraform init && terraform apply              # outputs github_deploy_role_arn
+```
+
+Then add these **repository variables** (Settings → Secrets and variables → Actions → Variables): `AWS_ROLE_ARN`, `AWS_REGION`, `FRONTEND_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`, `LAMBDA_PACKAGES_BUCKET`, `API_URL`, `CLERK_PUBLISHABLE_KEY`. None of these is a secret: the Clerk publishable key is public by design. Until `AWS_ROLE_ARN` is set, the deploy workflows are skipped.
+
 ### Tear down
 
 ```bash
@@ -171,10 +211,14 @@ Aurora is the main ongoing cost. Destroy it, or let express clusters scale to ze
 - Every API request is authenticated with a Clerk JWT, validated against your Clerk JWKS endpoint.
 - The database is reached over the IAM-authenticated RDS Data API. It is never publicly exposed.
 
+## Author
+
+**Arash Omranpour**: [Arashomranpour@gmail.com](mailto:Arashomranpour@gmail.com) · [GitHub](https://github.com/Arashomranpour)
+
 ## Acknowledgements
 
-Built as the capstone project of the *AI in Production* course by Ed Donner, extended to run its agents on Groq through LiteLLM.
+Built on the capstone project of the *AI in Production* course by Ed Donner. This version runs the agents on Groq through LiteLLM, supports AWS free-plan accounts with Aurora express configuration, retries while a paused database resumes, and adds CI/CD with GitHub Actions.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT © 2026 Arash Omranpour. Based on original work © 2025 Ed Donner. See [LICENSE](LICENSE).

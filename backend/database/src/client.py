@@ -6,6 +6,7 @@ Provides a simple interface for database operations
 import boto3
 import json
 import os
+import time
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import date, datetime
 from decimal import Decimal
@@ -21,6 +22,18 @@ except ImportError:
     pass  # dotenv not installed, continue without it
 
 logger = logging.getLogger(__name__)
+
+# Up to ~60s of retries while a paused Aurora Serverless cluster resumes
+RESUME_RETRIES = 8
+
+
+def _is_resuming(error: ClientError) -> bool:
+    """True if the Data API rejected the call because the cluster is paused or waking up."""
+    code = error.response.get("Error", {}).get("Code", "")
+    message = str(error)
+    return code == "DatabaseResumingException" or (
+        code == "HttpEndpointNotEnabledException" and "being enabled" in message
+    )
 
 
 class DataAPIClient:
@@ -78,8 +91,17 @@ class DataAPIClient:
             if parameters:
                 kwargs["parameters"] = parameters
 
-            response = self.client.execute_statement(**kwargs)
-            return response
+            # A scale-to-zero cluster rejects calls while it resumes (~15-30s), so retry with backoff
+            for attempt in range(RESUME_RETRIES + 1):
+                try:
+                    return self.client.execute_statement(**kwargs)
+                except ClientError as e:
+                    if attempt < RESUME_RETRIES and _is_resuming(e):
+                        delay = min(2 ** attempt, 10)
+                        logger.warning(f"Database resuming, retrying in {delay}s (attempt {attempt + 1}/{RESUME_RETRIES})")
+                        time.sleep(delay)
+                        continue
+                    raise
 
         except ClientError as e:
             logger.error(f"Database error: {e}")
