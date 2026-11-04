@@ -221,4 +221,4 @@ This version runs the agents on Groq through LiteLLM, supports AWS free-plan acc
 I Love Claude .
 ## License
 
-MIT © 2026 Arash Omranpour. Based on original work © 2025 Ed Donner. See [LICENSE](LICENSE).
+MIT © 2026 Arash Omranpour. See [LICENSE](LICENSE).
