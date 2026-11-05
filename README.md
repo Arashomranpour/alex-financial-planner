@@ -66,7 +66,7 @@ graph TB
 | **Retirement** | Runs Monte Carlo simulations and retirement-readiness projections. |
 | **Researcher** | Browses the web for market research and ingests findings into S3 Vectors. It can run on a schedule. |
 
-The agents are built with the OpenAI Agents SDK and call models through **LiteLLM**. That means they can run on **Groq** (default: `groq/openai/gpt-oss-120b`) or **Amazon Bedrock** (for example, Nova Pro), switched with one environment variable.
+The agents are built with liteLLM. That means they can run on **Groq** (default: `groq/openai/gpt-oss-120b`) or **Amazon Bedrock** (for example, Nova Pro), switched with one environment variable.
 
 ## Tech stack
 
@@ -74,7 +74,7 @@ The agents are built with the OpenAI Agents SDK and call models through **LiteLL
 |-------|------------|
 | Frontend | Next.js (React, TypeScript), Tailwind CSS, Recharts, Clerk |
 | API | FastAPI on AWS Lambda behind API Gateway |
-| Agents | OpenAI Agents SDK + LiteLLM (Groq / Bedrock), AWS Lambda, SQS |
+| Agents |  LiteLLM (Groq / Bedrock), AWS Lambda, SQS |
 | Data | Aurora Serverless v2 PostgreSQL (RDS Data API), Pydantic schemas |
 | Knowledge base | S3 Vectors + SageMaker Serverless embeddings |
 | Infrastructure | Terraform (one independent module per part), Docker for Lambda packaging |
